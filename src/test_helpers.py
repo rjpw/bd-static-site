@@ -1,6 +1,6 @@
 import unittest
 
-from helpers import *
+from markdown_conversion import *
 
 class TestHelpers(unittest.TestCase):
     def test_extract_markdown_images(self):
