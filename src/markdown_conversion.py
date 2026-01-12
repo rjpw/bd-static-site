@@ -2,6 +2,26 @@ import re
 from textnode import TextNode, TextType
 from leafnode import LeafNode
 
+def extract_markdown_images(text):
+    return re.findall(r"!\[(.*?)\]\((.*?)\)", text)
+
+def extract_markdown_links(text):
+    return re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
+
+def markdown_to_blocks(markdown):
+    """
+    Breaks a markdown document into blocks based on blank lines (i.e. '\n\n').
+    
+    :param markdown: Raw markdown document
+    """
+
+    # raw array from markdown
+    raw_blocks = markdown.split('\n\n')
+    clean_blocks = []
+    for block in raw_blocks:
+        clean_blocks.append(block.strip())
+    return clean_blocks
+
 def text_node_to_html_node(text_node):
     match text_node.text_type:
         case TextType.TEXT:
@@ -63,12 +83,6 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
 
     return new_nodes
 
-def extract_markdown_images(text):
-    return re.findall(r"!\[(.*?)\]\((.*?)\)", text)
-
-def extract_markdown_links(text):
-    return re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
-
 def split_nodes_image(old_nodes):
     new_nodes = []
 
@@ -99,7 +113,6 @@ def split_nodes_image(old_nodes):
                 new_nodes.append(TextNode(text, TextType.TEXT))
 
     return new_nodes
-
 
 def split_nodes_link(old_nodes):
 
@@ -145,17 +158,3 @@ def text_to_textnodes(text):
     new_nodes = split_nodes_link(image_nodes)
 
     return new_nodes
-
-def markdown_to_blocks(markdown):
-    """
-    Breaks a markdown document into blocks based on blank lines (i.e. '\n\n').
-    
-    :param markdown: Raw markdown document
-    """
-
-    # raw array from markdown
-    raw_blocks = markdown.split('\n\n')
-    clean_blocks = []
-    for block in raw_blocks:
-        clean_blocks.append(block.strip())
-    return clean_blocks
