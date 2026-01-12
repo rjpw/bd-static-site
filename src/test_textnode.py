@@ -1,7 +1,8 @@
 import unittest
 
-from textnode import TextNode, TextType
+from textnode import TextNode
 from markdown_conversion import *
+from markdown_enums import *
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):

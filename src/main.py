@@ -1,8 +1,9 @@
 import textnode
+from markdown_enums import TextType
 
 def main():
     link = textnode.TextNode("this is some anchor text", 
-                             textnode.TextType.LINK, 
+                             TextType.LINK, 
                              "https://www.boot.dev")
     print(link)
 
