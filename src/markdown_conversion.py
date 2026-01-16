@@ -1,4 +1,4 @@
-import re
+import os, re
 from htmlnode import HTMLNode
 from leafnode import LeafNode
 from textnode import TextNode
@@ -104,6 +104,30 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as f:
         f.write(page_content)
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+
+    if not os.path.exists(dest_dir_path):
+        # make the target directory (since we know it was removed)
+        print(f"Creating target directory: {dest_dir_path}")
+        os.mkdir(dest_dir_path)
+
+    # find and copy source contents
+    print(f"Crawling directory: {dir_path_content}")
+
+    contents = os.listdir(dir_path_content)
+    for item in contents:
+
+        # print(f"item: {item}")
+        source_subpath = os.path.join(dir_path_content, item)
+        target_subpath = os.path.join(dest_dir_path, item)
+
+        if os.path.isfile(source_subpath):
+            print(f"found file: {source_subpath}")
+            target_filename = item[:-3] + ".html"
+            generate_page(source_subpath, template_path, os.path.join(dest_dir_path, target_filename))
+        else:
+            print(f"Recursing into {source_subpath}")
+            generate_pages_recursive(source_subpath, template_path, target_subpath)
 
 def get_header_from_block(block):
     matches = re.findall(r"^(#{1,6}) +(.*)$", block)
@@ -139,7 +163,12 @@ def get_ol_from_block(block):
     matches = re.findall(r"\d+\. (.*)", block, re.MULTILINE)
     children = []
     for match in matches:
-        children.append(LeafNode("li", match))
+        text_nodes = text_to_textnodes(match)
+        # print(f"text_nodes: {text_nodes}")
+        leaf_nodes = []
+        for node in text_nodes:
+            leaf_nodes.append(text_node_to_html_node(node))
+        children.append(ParentNode("li", leaf_nodes))
     return ParentNode("ol", children)
 
 def get_para_from_block(block):

@@ -2,7 +2,7 @@
 # from markdown_enums import TextType
 import os
 from shutil import copy, rmtree
-from markdown_conversion import generate_page
+from markdown_conversion import generate_pages_recursive
 
 def copy_static_contents(source_dir, target_dir):
 
@@ -34,7 +34,7 @@ def copy_static_contents(source_dir, target_dir):
 
 def main():
     copy_static_contents("static", "public")
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content", "template.html", "public")
 
 if __name__ == "__main__":
     main()
