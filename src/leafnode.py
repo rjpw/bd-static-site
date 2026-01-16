@@ -1,6 +1,9 @@
 from htmlnode import HTMLNode
 
 class LeafNode(HTMLNode):
+    """
+    A LeafNode is an HTMLNode with no children
+    """
     def __init__(self, tag=None, value=None, props=None):
         super().__init__(tag, value, None, props)
 
