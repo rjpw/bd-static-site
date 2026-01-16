@@ -1,9 +1,17 @@
-from enum import Enum
+from enum import StrEnum, auto
 
-class TextType(Enum):
-    TEXT   = "text"
-    BOLD   = "bold"
-    ITALIC = "italic"
-    CODE   = "code"
-    LINK   = "link"
-    IMAGE  = "image"
+class TextType(StrEnum):
+    TEXT   = auto()
+    BOLD   = auto()
+    ITALIC = auto()
+    CODE   = auto()
+    LINK   = auto()
+    IMAGE  = auto()
+
+class BlockType(StrEnum):
+    PARAGRAPH       = auto()
+    HEADING         = auto()
+    CODE            = auto()
+    QUOTE           = auto()
+    UNORDERED_LIST  = auto()
+    ORDERED_LIST    = auto()
