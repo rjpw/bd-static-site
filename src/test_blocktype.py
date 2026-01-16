@@ -87,7 +87,7 @@ the **same** even with inline stuff
         html = node.to_html()
         self.assertEqual(
             html,
-            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+            "<pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre>",
         )
 
     def test_can_generate_blockquote(self):

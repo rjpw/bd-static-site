@@ -1,13 +1,70 @@
 import re
-from textnode import TextNode
+from htmlnode import HTMLNode
 from leafnode import LeafNode
-from markdown_enums import TextType
+from textnode import TextNode
+from parentnode import ParentNode
+from markdown_enums import TextType, BlockType
+
+def is_header(block):
+    matches = re.findall(r"^#{1,6} (.*)$", block)
+    return len(matches) > 0
+
+def is_codeblock(block):
+    matches = re.findall(r"```\n(.*\n)+```", block, re.MULTILINE)
+    return len(matches) > 0
+
+def is_quoteblock(block):
+    lines = block.strip().split('\n')
+    matches = re.findall(r"> (.*)", block, re.MULTILINE)
+    return len(lines) == len(matches)
+
+def is_unordered_list(block):
+    lines = block.strip().split('\n')
+    matches = re.findall(r"- (.*)", block, re.MULTILINE)
+    return len(lines) == len(matches)
+
+def is_ordered_list(block):
+    lines = block.strip().split('\n')
+    matches = re.findall(r"(\d+)\. (.*)", block, re.MULTILINE)
+    return len(lines) == len(matches)
 
 def extract_markdown_images(text):
     return re.findall(r"!\[(.*?)\]\((.*?)\)", text)
 
 def extract_markdown_links(text):
     return re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
+
+def block_to_block_type(block):
+    """
+
+    Returns a BlockType for a given block.
+    
+    * Headings start with 1-6 # characters, followed by a space and then the heading text.
+    * Multiline Code blocks must start with 3 backticks and a newline, then end with 3 backticks.
+    * Every line in a quote block must start with a "greater-than" character and a space: >
+    * Every line in an unordered list block must start with a - character, followed by a space.
+    * Every line in an ordered list block must start with a number followed by a . character and a space. 
+      The number must start at 1 and increment by 1 for each line.
+    * If none of the above conditions are met, the block is a normal paragraph.
+    
+    :param block: Description
+    """
+
+    if is_header(block):
+        return BlockType.HEADING
+    elif is_codeblock(block):
+        return BlockType.CODE
+    elif is_quoteblock(block):
+        return BlockType.QUOTE
+    elif is_unordered_list(block):
+        return BlockType.UNORDERED_LIST
+    elif is_ordered_list(block):
+        return BlockType.ORDERED_LIST
+    elif is_ordered_list(block):
+        return BlockType.ORDERED_LIST
+    else:
+        # return default the moment
+        return BlockType.PARAGRAPH
 
 def markdown_to_blocks(markdown):
     """
@@ -23,16 +80,88 @@ def markdown_to_blocks(markdown):
         clean_blocks.append(block.strip())
     return clean_blocks
 
+def get_header_from_block(block):
+    matches = re.findall(r"^(#{1,6}) +(.*)$", block)
+    tag = f"h{len(matches[0][0])}"
+    return LeafNode(tag, matches[0][1])
+
+def get_codeblock_from_block(block):
+    matches = re.findall(r"```\n(.*)```", block, re.DOTALL)
+    codeblock = LeafNode("code", matches[0])
+    preformat_node = ParentNode("pre", [codeblock])
+    return preformat_node
+
+def get_blockquote_from_block(block):
+    matches = re.findall(r"> (.*)", block, re.MULTILINE)
+    quoteblock = LeafNode("blockquote", "\n".join(matches))
+    return quoteblock
+
+def get_ul_from_block(block):
+    matches = re.findall(r"- (.*)", block, re.MULTILINE)
+    children = []
+    for match in matches:
+        children.append(LeafNode("li", match))
+    return ParentNode("ul", children)
+
+def get_ol_from_block(block):
+    matches = re.findall(r"\d+\. (.*)", block, re.MULTILINE)
+    children = []
+    for match in matches:
+        children.append(LeafNode("li", match))
+    return ParentNode("ol", children)
+
+def get_para_from_block(block):
+    text_nodes = text_to_textnodes(block)
+    leaf_nodes = []
+    for node in text_nodes:
+        leaf_nodes.append(text_node_to_html_node(node))
+    return ParentNode("p", leaf_nodes)
+
+def markdown_to_html_node(markdown):
+    """
+    Converts a markdown block to a parent ParentNode (i.e. a DIV)
+    with recursively nested subnodes, each of the appropriate tag.
+    
+    :param markdown: Markdown text 
+    """
+
+    children = []
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+
+        block_type = block_to_block_type(block)
+        #print(f"\nDetected block type: {block_type} for block: {block[:20]}")
+
+        match block_type:
+            case BlockType.HEADING:
+                children.append(get_header_from_block(block))
+            case BlockType.CODE:
+                children.append(get_codeblock_from_block(block))
+            case BlockType.QUOTE:
+                children.append(get_blockquote_from_block(block))
+            case BlockType.UNORDERED_LIST:
+                children.append(get_ul_from_block(block))
+            case BlockType.ORDERED_LIST:
+                children.append(get_ol_from_block(block))
+            case BlockType.PARAGRAPH:
+                children.append(get_para_from_block(block))
+            case _:
+                raise Exception("unexpected block type")
+    
+    # create a parent node and return it
+    return ParentNode("div", children)
+
+
 def text_node_to_html_node(text_node):
     match text_node.text_type:
         case TextType.TEXT:
-            return LeafNode(None, text_node.text, None)
+            return LeafNode(None, text_node.text)
         case TextType.BOLD:
-            return LeafNode("b", text_node.text, text_node.props)
+            return LeafNode("b", text_node.text)
         case TextType.ITALIC:
-            return LeafNode("i", text_node.text, text_node.props)
+            return LeafNode("i", text_node.text)
         case TextType.CODE:
-            return LeafNode("code", text_node.text, text_node.props)
+            return LeafNode("code", text_node.text)
         case TextType.LINK:
             props = {}
             props["href"] = text_node.url
@@ -132,8 +261,6 @@ def split_nodes_link(old_nodes):
 
                 link_text, link_href = link_matches[0]
                 sections = text.split(f"[{link_text}]({link_href})", 1)
-
-                #print(f"sections: {sections}, link_text: {link_text}, link_href {link_href}")
 
                 # at this point we have only what does NOT have a link
                 if len(sections[0]) > 0:
