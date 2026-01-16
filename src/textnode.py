@@ -4,6 +4,9 @@ class TextNode():
         self.text_type = text_type
         self.url = url
 
+    def to_html(self):
+        return self.text
+
     def __eq__(self, other):
         return self.text == other.text \
             and self.text_type == other.text_type \
