@@ -151,3 +151,12 @@ the **same** even with inline stuff
             html,
             expected,
         )
+
+    def test_extract_title(self):
+        self.assertEqual(extract_title("# Hello"), "Hello")
+
+    def test_extract_title_failure(self):
+        with self.assertRaises(Exception):
+            extract_title("Hello")
+
+

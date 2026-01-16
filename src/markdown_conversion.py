@@ -34,6 +34,16 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     return re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
 
+def extract_title(text):
+    if is_header(text):
+        header = get_header_from_block(text)
+        if header.tag == 'h1' and header.value:
+            return header.value
+        else:
+            raise Exception("Invalid title")
+    else:
+        raise Exception("Not a header")
+
 def block_to_block_type(block):
     """
 
@@ -80,8 +90,25 @@ def markdown_to_blocks(markdown):
         clean_blocks.append(block.strip())
     return clean_blocks
 
+def get_file_contents(file_path):
+    with open(file_path, "r") as f:
+        return f.read()
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {template_path} using {dest_path}")
+    markdown = get_file_contents(from_path)
+    template = get_file_contents(template_path)
+    html_content = markdown_to_html_node(markdown).to_html()
+    title = extract_title(markdown_to_blocks(markdown)[0])
+    page_content = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+    with open(dest_path, "w") as f:
+        f.write(page_content)
+
+
 def get_header_from_block(block):
     matches = re.findall(r"^(#{1,6}) +(.*)$", block)
+    if len(matches) == 0:
+        raise Exception("No header detected")
     tag = f"h{len(matches[0][0])}"
     return LeafNode(tag, matches[0][1])
 
@@ -100,7 +127,12 @@ def get_ul_from_block(block):
     matches = re.findall(r"- (.*)", block, re.MULTILINE)
     children = []
     for match in matches:
-        children.append(LeafNode("li", match))
+        text_nodes = text_to_textnodes(match)
+        # print(f"text_nodes: {text_nodes}")
+        leaf_nodes = []
+        for node in text_nodes:
+            leaf_nodes.append(text_node_to_html_node(node))
+        children.append(ParentNode("li", leaf_nodes))
     return ParentNode("ul", children)
 
 def get_ol_from_block(block):
@@ -284,5 +316,7 @@ def text_to_textnodes(text):
     italic_nodes = split_nodes_delimiter(code_nodes, '_', TextType.ITALIC)
     image_nodes = split_nodes_image(italic_nodes)
     new_nodes = split_nodes_link(image_nodes)
+
+    # print(f"Nodes: {new_nodes}")
 
     return new_nodes

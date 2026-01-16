@@ -104,6 +104,23 @@ the **same** even with inline stuff
             "<blockquote>Four score and seven years ago\nsomeone said something momentous\nand I must admit I forget the details</blockquote>",
         )
 
+    def test_codeblock_to_nodes(self):
+        md = """
+> "I am in fact a Hobbit in all but size."
+> 
+> -- J.R.R. Tolkien
+"""
+
+        node = get_blockquote_from_block(md)
+        html = node.to_html()
+        expected = '<blockquote>"I am in fact a Hobbit in all but size."\n\n-- J.R.R. Tolkien</blockquote>'
+
+        self.assertEqual(
+            html,
+            expected,
+        )
+    
+
     def test_can_generate_ul(self):
         md = """
 - Four score and seven years ago
