@@ -33,9 +33,9 @@ def copy_static_contents(source_dir, target_dir):
             copy_static_contents(source_subpath, target_subpath)
 
 def main(basepath):
-    copy_static_contents("static", basepath)
-    generate_pages_recursive("content", "template.html", basepath, basepath)
+    copy_static_contents("static", "docs")
+    generate_pages_recursive("content", "template.html", "docs", basepath)
 
 if __name__ == "__main__":
-    basepath = sys.argv[1] if len(sys.argv) > 1 else "docs"
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
     main(basepath)

@@ -95,22 +95,22 @@ def get_file_contents(file_path):
     with open(file_path, "r") as f:
         return f.read()
 
-def generate_page(from_path, template_path, dest_path, basepath="docs"):
+
+def generate_page(from_path, template_path, dest_path, basepath="/"):
     print(f"Generating page from {from_path} to {template_path} using {dest_path}")
     markdown = get_file_contents(from_path)
     template = get_file_contents(template_path)
     html_content = markdown_to_html_node(markdown).to_html()
     title = extract_title(markdown_to_blocks(markdown)[0])
     page_content = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
-
-    # these next two lines are a templating hack for publishing to HitGub, but I'm ready to forgive myself
-    page_content = page_content.replace('href="/', 'href="/{{ Basepath }}').replace('src="/', 'src="/{{ Basepath }}')
-    page_content = page_content.replace("{{ Basepath }}", f"{basepath}/")
-
+    if basepath != '/':
+        # these next two lines are a templating hack for publishing to HitGub, but I'm prepared to forgive myself
+        page_content = page_content.replace('href="/', 'href="/{{ Basepath }}/').replace('src="/', 'src="/{{ Basepath }}/')
+        page_content = page_content.replace("{{ Basepath }}", f"{basepath}")
     with open(dest_path, "w") as f:
         f.write(page_content)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="docs"):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="/"):
 
     if not os.path.exists(dest_dir_path):
         # make the target directory (since we know it was removed)
@@ -130,10 +130,10 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
         if os.path.isfile(source_subpath):
             print(f"found file: {source_subpath}")
             target_filename = item[:-3] + ".html"
-            generate_page(source_subpath, template_path, os.path.join(dest_dir_path, target_filename))
+            generate_page(source_subpath, template_path, os.path.join(dest_dir_path, target_filename), basepath)
         else:
             print(f"Recursing into {source_subpath}")
-            generate_pages_recursive(source_subpath, template_path, target_subpath)
+            generate_pages_recursive(source_subpath, template_path, target_subpath, basepath)
 
 def get_header_from_block(block):
     matches = re.findall(r"^(#{1,6}) +(.*)$", block)
