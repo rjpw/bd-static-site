@@ -1,6 +1,6 @@
 # import textnode
 # from markdown_enums import TextType
-import os
+import os, sys
 from shutil import copy, rmtree
 from markdown_conversion import generate_pages_recursive
 
@@ -32,9 +32,10 @@ def copy_static_contents(source_dir, target_dir):
             print(f"Recursing into {source_subpath}")
             copy_static_contents(source_subpath, target_subpath)
 
-def main():
-    copy_static_contents("static", "public")
-    generate_pages_recursive("content", "template.html", "public")
+def main(basepath):
+    copy_static_contents("static", basepath)
+    generate_pages_recursive("content", "template.html", basepath, basepath)
 
 if __name__ == "__main__":
-    main()
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "docs"
+    main(basepath)
